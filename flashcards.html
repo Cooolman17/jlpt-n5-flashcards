@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JLPT N5 Flashcards</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .back-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .category-select-wrapper {
+            margin-top: 20px;
+        }
+
+        #category-select {
+            padding: 12px 20px;
+            font-size: 1em;
+            border-radius: 10px;
+            border: none;
+            background: white;
+            color: #667eea;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            min-width: 200px;
+        }
+
+        .stats {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .card-container {
+            perspective: 1000px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            width: 100%;
+            height: 400px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-front {
+            background: white;
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        .japanese-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .hiragana-reading {
+            font-size: 1.2em;
+            color: #9333ea;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .japanese-text {
+            font-size: 3.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .romaji-reading {
+            font-size: 1.3em;
+            color: #666;
+            margin-top: 15px;
+        }
+
+        .english-text {
+            font-size: 2em;
+            font-weight: 500;
+        }
+
+        .category {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(102, 126, 234, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .card-back .category {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .hint {
+            text-align: center;
+            color: white;
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-know {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-know:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-learning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-learning:hover {
+            background: #d97706;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-shuffle {
+            background: white;
+            color: #667eea;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-shuffle:hover {
+            background: #f3f4f6;
+            transform: translateY(-2px);
+        }
+
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.2);
+            height: 8px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .progress-fill {
+            background: white;
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        .error-message {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .error-message h2 {
+            color: #c33;
+            margin-bottom: 15px;
+        }
+
+        .error-message p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .error-message button {
+            background: #667eea;
+            color: white;
+        }
+
+        @media (max-width: 600px) {
+            .japanese-text {
+                font-size: 2.5em;
+            }
+
+            .hiragana-reading {
+                font-size: 1em;
+            }
+
+            .romaji-reading {
+                font-size: 1.1em;
+            }
+
+            .english-text {
+                font-size: 1.5em;
+            }
+
+            .card {
+                height: 350px;
+            }
+
+            button {
+                padding: 12px 20px;
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="app">
+        <!-- Content will be loaded here -->
+    </div>
+
+    <script>
+        // ========================================
+        // LOAD DATA FROM SESSION STORAGE
+        // ========================================
+        let vocabulary = [];
+        let currentIndex = 0;
+        let knownCards = 0;
+        let learningCards = 0;
+        let deck = [];
+        let currentCategory = 'all';
+
+        // Check if vocabulary data exists
+        const vocabularyData = sessionStorage.getItem('vocabulary');
+        
+        if (!vocabularyData) {
+            // Show error if no data
+            document.getElementById('app').innerHTML = `
+                <div class="error-message">
+                    <h2>No Data Found</h2>
+                    <p>Please start from the beginning by selecting a lesson.</p>
+                    <button onclick="window.location.href='index.html'">Go to Start Page</button>
+                </div>
+            `;
+        } else {
+            // Load vocabulary and initialize app
+            vocabulary = JSON.parse(vocabularyData);
+            initializeApp();
+        }
+
+        // ========================================
+        // INITIALIZE APPLICATION
+        // ========================================
+        function initializeApp() {
+            // Get unique categories
+            const categories = [...new Set(vocabulary.map(v => v.category))].sort();
+            
+            // Build category options
+            const categoryOptions = categories.map(cat => 
+                `<option value="${cat}">${cat}</option>`
+            ).join('');
+
+            // Render the app
+            document.getElementById('app').innerHTML = `
+                <div class="header">
+                    <button class="back-button" onclick="goBack()">← Back to Lessons</button>
+                    <h1>JLPT N5 Flashcards</h1>
+                    <div class="category-select-wrapper">
+                        <select id="category-select" onchange="filterByCategory()">
+                            <option value="all">All Categories</option>
+                            ${categoryOptions}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="known-count">0</div>
+                        <div class="stat-label">Known</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="learning-count">0</div>
+                        <div class="stat-label">Learning</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="remaining-count">${vocabulary.length}</div>
+                        <div class="stat-label">Remaining</div>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+
+                <div class="hint">👆 Click the card to flip it</div>
+
+                <div class="card-container">
+                    <div class="card" id="flashcard" onclick="flipCard()">
+                        <div class="card-face card-front">
+                            <div class="category" id="category-front"></div>
+                            <div class="japanese-wrapper">
+                                <div class="hiragana-reading" id="hiragana-reading"></div>
+                                <div class="japanese-text" id="japanese"></div>
+                            </div>
+                            <div class="romaji-reading" id="romaji-reading"></div>
+                        </div>
+                        <div class="card-face card-back">
+                            <div class="category" id="category-back"></div>
+                            <div class="english-text" id="english"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn-learning" onclick="markCard('learning')">Still Learning 📚</button>
+                    <button class="btn-know" onclick="markCard('known')">I Know This! ✓</button>
+                </div>
+                <button class="btn-shuffle" onclick="shuffle()">🔀 Shuffle Deck</button>
+            `;
+
+            // Initialize deck and show first card
+            shuffle();
+        }
+
+        // ========================================
+        // FLASHCARD FUNCTIONS
+        // ========================================
+        function filterByCategory() {
+            const select = document.getElementById('category-select');
+            currentCategory = select.value;
+            
+            if (currentCategory === 'all') {
+                deck = [...vocabulary];
+            } else {
+                deck = vocabulary.filter(card => card.category === currentCategory);
+            }
+            
+            deck = deck.sort(() => Math.random() - 0.5);
+            currentIndex = 0;
+            knownCards = 0;
+            learningCards = 0;
+            updateStats();
+            showCard();
+        }
+
+        function shuffle() {
+            if (currentCategory === 'all') {
+                deck = [...vocabulary].sort(() => Math.random() - 0.5);
+            } else {
+                deck = vocabulary.filter(card => card.category === currentCategory).sort(() => Math.random() - 0.5);
+            }
+            currentIndex = 0;
+            knownCards = 0;
+            learningCards = 0;
+            updateStats();
+            showCard();
+        }
+
+        function showCard() {
+            if (currentIndex >= deck.length) {
+                currentIndex = 0;
+            }
+
+            const card = deck[currentIndex];
+            
+            // Show hiragana reading only if it differs from the main text
+            const hiraganaReading = document.getElementById('hiragana-reading');
+            if (card.jp !== card.hiragana) {
+                hiraganaReading.textContent = card.hiragana;
+                hiraganaReading.style.display = 'block';
+            } else {
+                hiraganaReading.style.display = 'none';
+            }
+            
+            document.getElementById('japanese').textContent = card.jp;
+            document.getElementById('romaji-reading').textContent = card.romaji;
+            document.getElementById('english').textContent = card.en;
+            document.getElementById('category-front').textContent = card.category;
+            document.getElementById('category-back').textContent = card.category;
+
+            document.getElementById('flashcard').classList.remove('flipped');
+        }
+
+        function flipCard() {
+            document.getElementById('flashcard').classList.toggle('flipped');
+        }
+
+        function markCard(status) {
+            if (status === 'known') {
+                knownCards++;
+            } else {
+                learningCards++;
+            }
+
+            currentIndex++;
+            if (currentIndex >= deck.length) {
+                currentIndex = 0;
+            }
+
+            updateStats();
+            showCard();
+        }
+
+        function updateStats() {
+            const remaining = deck.length - (knownCards + learningCards);
+            document.getElementById('known-count').textContent = knownCards;
+            document.getElementById('learning-count').textContent = learningCards;
+            document.getElementById('remaining-count').textContent = remaining > 0 ? remaining : deck.length;
+
+            const progress = ((knownCards + learningCards) / deck.length) * 100;
+            document.getElementById('progress-fill').style.width = progress + '%';
+        }
+
+        function goBack() {
+            // Clear session storage
+            sessionStorage.removeItem('vocabulary');
+            sessionStorage.removeItem('selectedLesson');
+            sessionStorage.removeItem('selectedType');
+            
+            // Go back to start page
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

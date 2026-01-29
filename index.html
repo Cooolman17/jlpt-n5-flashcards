@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JLPT N5 Flashcards - Start</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: white;
+            border-radius: 30px;
+            padding: 50px 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1em;
+        }
+
+        select {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1em;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            padding-right: 45px;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        select:hover {
+            border-color: #667eea;
+        }
+
+        .start-button {
+            width: 100%;
+            padding: 18px;
+            font-size: 1.2em;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .start-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .start-button:active {
+            transform: translateY(0);
+        }
+
+        .start-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+
+        .info-box p {
+            color: #666;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            display: none;
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 40px 30px;
+            }
+
+            .logo h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>🎌 JLPT N5</h1>
+            <p>Flashcard Learning</p>
+        </div>
+
+        <form id="start-form">
+            <div class="form-group">
+                <label for="lesson-select">Select Lesson</label>
+                <select id="lesson-select" required>
+                    <option value="">Loading lessons...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="type-select">Select Type</label>
+                <select id="type-select" required>
+                    <option value="vocabulary">Vocabulary</option>
+                    <option value="grammar" disabled>Grammar (Coming Soon)</option>
+                </select>
+            </div>
+
+            <button type="submit" class="start-button" id="start-button">
+                Start Learning 🚀
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 15px; color: #666;">Loading flashcards...</p>
+        </div>
+
+        <div class="error" id="error">
+            <strong>Error:</strong> <span id="error-message"></span>
+        </div>
+
+        <div class="info-box">
+            <p><strong>Note:</strong> Make sure you've set up your Supabase connection. See the setup instructions in the code comments.</p>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // SUPABASE CONFIGURATION
+        // ========================================
+        const SUPABASE_URL = 'https://xjsrxzxrbzogeidqcozp.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhqc3J4enhyYnpvZ2VpZHFjb3pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2ODk3MzIsImV4cCI6MjA4NTI2NTczMn0.fYf40PoX4y7UuC6kPBAvPdar99KfSXdKLKeflGSBXKA';
+
+        // ========================================
+        // INITIALIZATION
+        // ========================================
+        const lessonSelect = document.getElementById('lesson-select');
+        const typeSelect = document.getElementById('type-select');
+        const startButton = document.getElementById('start-button');
+        const startForm = document.getElementById('start-form');
+        const loading = document.getElementById('loading');
+        const errorDiv = document.getElementById('error');
+        const errorMessage = document.getElementById('error-message');
+
+        // Load lessons on page load
+        window.addEventListener('DOMContentLoaded', loadLessons);
+
+        // ========================================
+        // LOAD LESSONS FROM SUPABASE
+        // ========================================
+        async function loadLessons() {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/lessons?order=lesson_number.asc`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load lessons. Please check your Supabase configuration.');
+                }
+
+                const lessons = await response.json();
+
+                if (lessons.length === 0) {
+                    lessonSelect.innerHTML = '<option value="">No lessons available</option>';
+                    return;
+                }
+
+                // Populate lesson dropdown
+                lessonSelect.innerHTML = lessons.map(lesson => 
+                    `<option value="${lesson.id}">${lesson.lesson_name}</option>`
+                ).join('');
+
+            } catch (error) {
+                console.error('Error loading lessons:', error);
+                lessonSelect.innerHTML = '<option value="">Error loading lessons</option>';
+                showError(error.message);
+            }
+        }
+
+        // ========================================
+        // HANDLE FORM SUBMISSION
+        // ========================================
+        startForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const lessonId = lessonSelect.value;
+            const type = typeSelect.value;
+
+            if (!lessonId || !type) {
+                showError('Please select both lesson and type');
+                return;
+            }
+
+            // Store selections in sessionStorage
+            sessionStorage.setItem('selectedLesson', lessonId);
+            sessionStorage.setItem('selectedType', type);
+
+            // Show loading
+            loading.classList.add('active');
+            startButton.disabled = true;
+            hideError();
+
+            try {
+                // Fetch vocabulary for selected lesson
+                const response = await fetch(
+                    `${SUPABASE_URL}/rest/v1/vocabulary?lesson_id=eq.${lessonId}&order=id.asc`,
+                    {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error('Failed to load vocabulary');
+                }
+
+                const vocabulary = await response.json();
+
+                if (vocabulary.length === 0) {
+                    throw new Error('No vocabulary found for this lesson');
+                }
+
+                // Store vocabulary in sessionStorage
+                sessionStorage.setItem('vocabulary', JSON.stringify(vocabulary));
+
+                // Redirect to flashcard page
+                window.location.href = 'flashcards.html';
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message);
+                loading.classList.remove('active');
+                startButton.disabled = false;
+            }
+        });
+
+        // ========================================
+        // ERROR HANDLING
+        // ========================================
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorDiv.classList.add('active');
+        }
+
+        function hideError() {
+            errorDiv.classList.remove('active');
+        }
+    </script>
+</body>
+</html>
