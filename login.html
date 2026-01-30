@@ -442,26 +442,48 @@
                 
                 // If input doesn't contain @, it's a username - get the email from user_profiles
                 if (!emailOrUsername.includes('@')) {
+                    console.log('Looking up username:', emailOrUsername);
+                    
                     const { data: profile, error: profileError } = await supabaseClient
                         .from('user_profiles')
                         .select('email')
                         .eq('username', emailOrUsername)
                         .single();
 
-                    if (profileError || !profile) {
+                    console.log('Profile lookup result:', { profile, profileError });
+
+                    if (profileError) {
+                        console.error('Profile error:', profileError);
+                        
+                        // Check if it's an RLS error
+                        if (profileError.code === 'PGRST116') {
+                            throw new Error('Username not found. Please check your username or try logging in with email.');
+                        }
+                        
+                        throw new Error(profileError.message || 'Username not found');
+                    }
+                    
+                    if (!profile) {
                         throw new Error('Username not found');
                     }
 
                     email = profile.email;
+                    console.log('Found email for username:', email);
                 }
 
                 // Sign in with email and password
+                console.log('Attempting login with email:', email);
                 const { data, error } = await supabaseClient.auth.signInWithPassword({
                     email: email,
                     password: password
                 });
 
-                if (error) throw error;
+                if (error) {
+                    console.error('Auth error:', error);
+                    throw error;
+                }
+
+                console.log('Login successful:', data);
 
                 // Login successful
                 showSuccess('Login successful! Redirecting...');
