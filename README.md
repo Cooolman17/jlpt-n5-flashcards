@@ -43,15 +43,16 @@ A beautiful, interactive flashcard application for learning JLPT N5 Japanese voc
    cd jlpt-n5-flashcards
    ```
 
-2. **Set up Supabase** (see [SETUP_GUIDE.md](SETUP_GUIDE.md))
+2. **Set up Supabase**
    - Create a Supabase project
-   - Run `setup-database.sql` in SQL Editor
+   - Follow instructions in [DATABASE_SETUP.md](DATABASE_SETUP.md)
    - Enable Row Level Security policies
    - Get your API credentials
 
 3. **Configure the app**
-   - Open `index.html`
+   - Open `login.html` and `greeting.html`
    - Update `SUPABASE_URL` and `SUPABASE_ANON_KEY` with your credentials
+   - (Anon keys are safe to commit - see [SECURITY.md](SECURITY.md))
 
 4. **Run locally**
    ```bash
@@ -77,6 +78,18 @@ A beautiful, interactive flashcard application for learning JLPT N5 Japanese voc
 4. **Click cards to flip** and see the English translation
 5. **Mark cards** as "Still Learning" or "I Know This"
 6. **Filter by category** or shuffle for random order
+
+## 🔒 Security
+
+⚠️ **IMPORTANT:** This repository does NOT include SQL files or database schemas for security reasons.
+
+- ✅ Anon/public keys are safe in frontend code (protected by RLS)
+- ❌ SQL files are gitignored and NOT committed
+- ❌ Never commit service role keys or database passwords
+
+**See [SECURITY.md](SECURITY.md) for detailed security guidelines.**
+
+**See [DATABASE_SETUP.md](DATABASE_SETUP.md) for database setup instructions.**
 
 ## 🗄️ Database Structure
 
