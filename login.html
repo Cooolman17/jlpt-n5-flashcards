@@ -438,27 +438,21 @@
             showLoading();
 
             try {
-                // Determine if input is email or username
                 let email = emailOrUsername;
                 
+                // If input doesn't contain @, it's a username - get the email from user_profiles
                 if (!emailOrUsername.includes('@')) {
-                    // It's a username, get the email
                     const { data: profile, error: profileError } = await supabaseClient
                         .from('user_profiles')
-                        .select('id')
+                        .select('email')
                         .eq('username', emailOrUsername)
                         .single();
 
                     if (profileError || !profile) {
-                        throw new Error('User not found');
+                        throw new Error('Username not found');
                     }
 
-                    // Get email from auth.users
-                    const { data: { user }, error: userError } = await supabaseClient.auth.admin.getUserById(profile.id);
-                    if (userError || !user) {
-                        throw new Error('User not found');
-                    }
-                    email = user.email;
+                    email = profile.email;
                 }
 
                 // Sign in with email and password
