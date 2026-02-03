@@ -20,7 +20,6 @@ Go to **SQL Editor** in your Supabase dashboard and run the following SQL:
 -- Lessons table
 CREATE TABLE lessons (
   id SERIAL PRIMARY KEY,
-  lesson_number INTEGER NOT NULL,
   lesson_name TEXT NOT NULL,
   description TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
@@ -30,10 +29,10 @@ CREATE TABLE lessons (
 CREATE TABLE vocabulary (
   id SERIAL PRIMARY KEY,
   lesson_id INTEGER REFERENCES lessons(id) ON DELETE CASCADE,
-  jp TEXT NOT NULL,
+  displayWord TEXT NOT NULL,
   hiragana TEXT NOT NULL,
   romaji TEXT NOT NULL,
-  en TEXT NOT NULL,
+  english TEXT NOT NULL,
   category TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
@@ -44,6 +43,7 @@ CREATE TABLE user_profiles (
   username TEXT UNIQUE NOT NULL,
   email TEXT NOT NULL,
   display_name TEXT,
+  lesson_id INTEGER NOT NULL REFERENCES lessons(id),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
@@ -80,6 +80,7 @@ CREATE INDEX idx_user_progress_user_id ON user_progress(user_id);
 CREATE INDEX idx_user_progress_vocabulary_id ON user_progress(vocabulary_id);
 CREATE INDEX idx_user_sessions_user_id ON user_sessions(user_id);
 CREATE INDEX idx_user_profiles_username ON user_profiles(username);
+CREATE INDEX idx_user_profiles_lesson_id ON user_profiles(lesson_id);
 ```
 
 #### Enable Row Level Security (RLS):
@@ -103,10 +104,10 @@ CREATE POLICY "Public read access to vocabulary"
   TO authenticated
   USING (true);
 
--- User Profiles: Read all, modify own
-CREATE POLICY "Users can view all profiles"
+-- User Profiles: Read all (for login), modify own
+CREATE POLICY "Public can view profiles for login"
   ON user_profiles FOR SELECT
-  TO authenticated
+  TO public
   USING (true);
 
 CREATE POLICY "Users can insert their own profile"
@@ -160,12 +161,13 @@ CREATE POLICY "Users can insert their own sessions"
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.user_profiles (id, username, email, display_name)
+  INSERT INTO public.user_profiles (id, username, email, display_name, lesson_id)
   VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'username', SPLIT_PART(NEW.email, '@', 1)),
+    LOWER(COALESCE(NEW.raw_user_meta_data->>'username', SPLIT_PART(NEW.email, '@', 1))),
     NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'display_name', SPLIT_PART(NEW.email, '@', 1))
+    COALESCE(NEW.raw_user_meta_data->>'display_name', SPLIT_PART(NEW.email, '@', 1)),
+    COALESCE((NEW.raw_user_meta_data->>'lesson_id')::INTEGER, 1)
   );
   RETURN NEW;
 END;

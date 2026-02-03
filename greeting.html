@@ -88,11 +88,13 @@
 
         .logo h1 {
             font-size: 2.5em;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
 
         .logo p {
@@ -245,8 +247,8 @@
         </div>
 
         <div class="logo">
-            <h1>🎌 JLPT N5</h1>
-            <p>Flashcard Learning</p>
+            <h1 id="lesson-title">FlashCard Learning</h1>
+            <p id="lesson-description">Select a lesson to begin</p>
         </div>
 
         <form id="start-form">
@@ -375,7 +377,7 @@
                 const { data: lessons, error } = await supabaseClient
                     .from('lessons')
                     .select('*')
-                    .order('lesson_number', { ascending: true });
+                    .order('id', { ascending: true });
 
                 if (error) throw error;
 
@@ -386,14 +388,30 @@
 
                 // Populate lesson dropdown
                 lessonSelect.innerHTML = lessons.map(lesson => 
-                    `<option value="${lesson.id}">${lesson.lesson_name}</option>`
+                    `<option value="${lesson.id}" data-description="${lesson.description || ''}">${lesson.lesson_name}</option>`
                 ).join('');
+
+                // Update description when lesson changes
+                lessonSelect.addEventListener('change', updateLessonDescription);
+                
+                // Set initial description
+                updateLessonDescription();
 
             } catch (error) {
                 console.error('Error loading lessons:', error);
                 lessonSelect.innerHTML = '<option value="">Error loading lessons</option>';
                 showError(error.message);
             }
+        }
+
+        // Update lesson description when selection changes
+        function updateLessonDescription() {
+            const selectedOption = lessonSelect.options[lessonSelect.selectedIndex];
+            const description = selectedOption.getAttribute('data-description');
+            const lessonName = selectedOption.text;
+            
+            document.getElementById('lesson-title').textContent = lessonName || 'FlashCard Learning';
+            document.getElementById('lesson-description').textContent = description || 'Select a lesson to begin';
         }
 
         // ========================================

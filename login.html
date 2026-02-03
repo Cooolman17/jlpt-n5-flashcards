@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - JLPT N5 Flashcards</title>
+    <title>Login - FlashCard Learning</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
     <style>
         * {
             margin: 0;
@@ -38,11 +39,12 @@
 
         .logo h1 {
             font-size: 2.5em;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 5px;
+            font-weight: 700;
         }
 
         .logo p {
@@ -102,17 +104,12 @@
             border: 2px solid #e0e0e0;
             border-radius: 10px;
             transition: all 0.3s;
-            font-family: inherit;
         }
 
         input:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        input::placeholder {
-            color: #999;
         }
 
         .password-toggle {
@@ -132,8 +129,6 @@
             border: none;
             cursor: pointer;
             color: #666;
-            font-size: 0.9em;
-            padding: 5px;
         }
 
         .submit-btn {
@@ -146,54 +141,41 @@
             border: none;
             border-radius: 10px;
             cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: transform 0.2s;
         }
 
         .submit-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
-
-        .submit-btn:active {
-            transform: translateY(0);
         }
 
         .submit-btn:disabled {
             background: #ccc;
             cursor: not-allowed;
-            box-shadow: none;
             transform: none;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
         }
 
         .error-message {
             background: #fee;
             border: 1px solid #fcc;
             color: #c33;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 0.9em;
-            display: none;
-        }
-
-        .error-message.show {
-            display: block;
         }
 
         .success-message {
             background: #efe;
             border: 1px solid #cfc;
             color: #3c3;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 0.9em;
-            display: none;
-        }
-
-        .success-message.show {
-            display: block;
         }
 
         .helper-text {
@@ -222,154 +204,79 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        .password-requirements {
-            font-size: 0.85em;
-            color: #666;
-            margin-top: 10px;
-            padding: 10px;
-            background: #f9f9f9;
-            border-radius: 6px;
-        }
-
-        .password-requirements ul {
-            margin: 5px 0 0 20px;
-            padding: 0;
-        }
-
-        .password-requirements li {
-            margin: 3px 0;
-        }
-
-        @media (max-width: 600px) {
-            .auth-container {
-                padding: 30px 25px;
-            }
-
-            .logo h1 {
-                font-size: 2em;
-            }
-        }
     </style>
 </head>
 <body>
     <div class="auth-container">
         <div class="logo">
-            <h1>🎌 JLPT N5</h1>
-            <p>Flashcard Learning</p>
+            <h1>FlashCard Learning</h1>
+            <p>Master Your Vocabulary</p>
         </div>
 
         <div class="tab-container">
-            <div class="tab active" onclick="showTab('login')">Login</div>
-            <div class="tab" onclick="showTab('signup')">Sign Up</div>
+            <div class="tab active" onclick="switchTab('login')">Login</div>
+            <div class="tab" onclick="switchTab('signup')">Sign Up</div>
         </div>
 
-        <div class="error-message" id="error-message"></div>
-        <div class="success-message" id="success-message"></div>
+        <div class="error-message message" id="error-message"></div>
+        <div class="success-message message" id="success-message"></div>
 
         <!-- Login Form -->
-        <div class="form-container active" id="login-form">
-            <form onsubmit="handleLogin(event)">
-                <div class="form-group">
-                    <label for="login-email">Email or Username</label>
-                    <input 
-                        type="text" 
-                        id="login-email" 
-                        placeholder="Enter your email or username"
-                        required
-                    >
-                </div>
+        <form class="form-container active" id="login-form" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="login-email">Email or Username</label>
+                <input type="text" id="login-email" placeholder="Enter your email or username" required>
+            </div>
 
-                <div class="form-group">
-                    <label for="login-password">Password</label>
-                    <div class="password-toggle">
-                        <input 
-                            type="password" 
-                            id="login-password" 
-                            placeholder="Enter your password"
-                            required
-                        >
-                        <button type="button" class="toggle-btn" onclick="togglePassword('login-password')">
-                            👁️
-                        </button>
-                    </div>
+            <div class="form-group">
+                <label for="login-password">Password</label>
+                <div class="password-toggle">
+                    <input type="password" id="login-password" placeholder="Enter your password" required>
+                    <button type="button" class="toggle-btn" onclick="togglePassword('login-password')">👁️</button>
                 </div>
+            </div>
 
-                <button type="submit" class="submit-btn" id="login-btn">
-                    Login
-                </button>
-            </form>
-        </div>
+            <button type="submit" class="submit-btn">Login</button>
+        </form>
 
         <!-- Signup Form -->
-        <div class="form-container" id="signup-form">
-            <form onsubmit="handleSignup(event)">
-                <div class="form-group">
-                    <label for="signup-username">Username</label>
-                    <input 
-                        type="text" 
-                        id="signup-username" 
-                        placeholder="Choose a username"
-                        pattern="[a-zA-Z0-9_]{3,20}"
-                        title="3-20 characters, letters, numbers, and underscore only"
-                        required
-                    >
-                    <div class="helper-text">3-20 characters, letters, numbers, and underscore only</div>
-                </div>
+        <form class="form-container" id="signup-form" onsubmit="handleSignup(event)">
+            <div class="form-group">
+                <label for="signup-username">Username</label>
+                <input 
+                    type="text" 
+                    id="signup-username" 
+                    placeholder="Choose a username"
+                    pattern="[a-zA-Z0-9_]{3,20}"
+                    required
+                >
+                <div class="helper-text">3-20 characters, letters, numbers, and underscore only</div>
+            </div>
 
-                <div class="form-group">
-                    <label for="signup-email">Email</label>
-                    <input 
-                        type="email" 
-                        id="signup-email" 
-                        placeholder="Enter your email"
-                        required
-                    >
-                </div>
+            <div class="form-group">
+                <label for="signup-email">Email</label>
+                <input type="email" id="signup-email" placeholder="Enter your email" required>
+            </div>
 
-                <div class="form-group">
-                    <label for="signup-password">Password</label>
-                    <div class="password-toggle">
-                        <input 
-                            type="password" 
-                            id="signup-password" 
-                            placeholder="Create a password"
-                            minlength="6"
-                            required
-                        >
-                        <button type="button" class="toggle-btn" onclick="togglePassword('signup-password')">
-                            👁️
-                        </button>
-                    </div>
-                    <div class="password-requirements">
-                        <strong>Password must:</strong>
-                        <ul>
-                            <li>Be at least 6 characters long</li>
-                        </ul>
-                    </div>
+            <div class="form-group">
+                <label for="signup-password">Password</label>
+                <div class="password-toggle">
+                    <input type="password" id="signup-password" placeholder="Create a password" minlength="6" required>
+                    <button type="button" class="toggle-btn" onclick="togglePassword('signup-password')">👁️</button>
                 </div>
+                <div class="helper-text">At least 6 characters</div>
+            </div>
 
-                <div class="form-group">
-                    <label for="signup-confirm-password">Confirm Password</label>
-                    <div class="password-toggle">
-                        <input 
-                            type="password" 
-                            id="signup-confirm-password" 
-                            placeholder="Confirm your password"
-                            minlength="6"
-                            required
-                        >
-                        <button type="button" class="toggle-btn" onclick="togglePassword('signup-confirm-password')">
-                            👁️
-                        </button>
-                    </div>
+            <div class="form-group">
+                <label for="signup-confirm">Confirm Password</label>
+                <div class="password-toggle">
+                    <input type="password" id="signup-confirm" placeholder="Confirm your password" minlength="6" required>
+                    <button type="button" class="toggle-btn" onclick="togglePassword('signup-confirm')">👁️</button>
                 </div>
+            </div>
 
-                <button type="submit" class="submit-btn" id="signup-btn">
-                    Create Account
-                </button>
-            </form>
-        </div>
+            <button type="submit" class="submit-btn">Create Account</button>
+        </form>
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
@@ -378,234 +285,141 @@
     </div>
 
     <script>
-        // ========================================
-        // SUPABASE CONFIGURATION
-        // ========================================
-        const SUPABASE_URL = 'https://xjsrxzxrbzogeidqcozp.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhqc3J4enhyYnpvZ2VpZHFjb3pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2ODk3MzIsImV4cCI6MjA4NTI2NTczMn0.fYf40PoX4y7UuC6kPBAvPdar99KfSXdKLKeflGSBXKA';
+        // Redirect if already logged in
+        (async () => {
+            const session = await Auth.getSession();
+            if (session) window.location.href = CONFIG.ROUTES.GREETING;
+        })();
 
-        // Initialize Supabase client
-        const { createClient } = supabase;
-        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // ========================================
-        // CHECK IF USER IS ALREADY LOGGED IN
-        // ========================================
-        window.addEventListener('DOMContentLoaded', async () => {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session) {
-                // User is already logged in, redirect to greeting page
-                window.location.href = 'greeting.html';
-            }
-        });
-
-        // ========================================
-        // TAB SWITCHING
-        // ========================================
-        function showTab(tab) {
-            // Update tabs
+        function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
-
-            // Update forms
+            
             document.querySelectorAll('.form-container').forEach(f => f.classList.remove('active'));
-            document.getElementById(tab + '-form').classList.add('active');
-
-            // Clear messages
-            hideError();
-            hideSuccess();
+            document.getElementById(`${tab}-form`).classList.add('active');
+            
+            UI.hideError();
+            UI.hideSuccess();
         }
 
-        // ========================================
-        // PASSWORD TOGGLE
-        // ========================================
         function togglePassword(inputId) {
             const input = document.getElementById(inputId);
             input.type = input.type === 'password' ? 'text' : 'password';
         }
 
-        // ========================================
-        // HANDLE LOGIN
-        // ========================================
         async function handleLogin(event) {
             event.preventDefault();
             
             const emailOrUsername = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value;
 
-            hideError();
-            hideSuccess();
-            showLoading();
+            UI.hideError();
+            UI.hideSuccess();
+            UI.showLoading();
 
             try {
                 let email = emailOrUsername;
                 
-                // If input doesn't contain @, it's a username - get the email from user_profiles
+                // Username lookup if not an email
                 if (!emailOrUsername.includes('@')) {
-                    console.log('Looking up username:', emailOrUsername);
-                    
-                    const { data: profile, error: profileError } = await supabaseClient
+                    const { data: profile, error } = await supabaseClient
                         .from('user_profiles')
                         .select('email')
-                        .eq('username', emailOrUsername)
+                        .eq('username', emailOrUsername.toLowerCase())
                         .single();
 
-                    console.log('Profile lookup result:', { profile, profileError });
-
-                    if (profileError) {
-                        console.error('Profile error:', profileError);
-                        
-                        // Check if it's an RLS error
-                        if (profileError.code === 'PGRST116') {
-                            throw new Error('Username not found. Please check your username or try logging in with email.');
-                        }
-                        
-                        throw new Error(profileError.message || 'Username not found');
-                    }
-                    
-                    if (!profile) {
+                    if (error || !profile) {
                         throw new Error('Username not found');
                     }
-
                     email = profile.email;
-                    console.log('Found email for username:', email);
                 }
 
-                // Sign in with email and password
-                console.log('Attempting login with email:', email);
-                const { data, error } = await supabaseClient.auth.signInWithPassword({
-                    email: email,
-                    password: password
+                // Authenticate
+                const { error } = await supabaseClient.auth.signInWithPassword({
+                    email,
+                    password
                 });
 
-                if (error) {
-                    console.error('Auth error:', error);
-                    throw error;
-                }
+                if (error) throw error;
 
-                console.log('Login successful:', data);
-
-                // Login successful
-                showSuccess('Login successful! Redirecting...');
+                UI.showSuccess('Login successful! Redirecting...');
                 setTimeout(() => {
-                    window.location.href = 'greeting.html';
-                }, 1000);
+                    window.location.href = CONFIG.ROUTES.GREETING;
+                }, CONFIG.DEFAULTS.REDIRECT_DELAY);
 
             } catch (error) {
-                console.error('Login error:', error);
-                showError(error.message || 'Invalid email/username or password');
+                UI.showError(error.message || 'Invalid email/username or password');
             } finally {
-                hideLoading();
+                UI.hideLoading();
             }
         }
 
-        // ========================================
-        // HANDLE SIGNUP
-        // ========================================
         async function handleSignup(event) {
             event.preventDefault();
 
             const username = document.getElementById('signup-username').value.trim();
             const email = document.getElementById('signup-email').value.trim();
             const password = document.getElementById('signup-password').value;
-            const confirmPassword = document.getElementById('signup-confirm-password').value;
+            const confirm = document.getElementById('signup-confirm').value;
 
-            hideError();
-            hideSuccess();
+            UI.hideError();
+            UI.hideSuccess();
 
-            // Validate passwords match
-            if (password !== confirmPassword) {
-                showError('Passwords do not match');
+            // Validation
+            if (!Validator.passwordsMatch(password, confirm)) {
+                UI.showError('Passwords do not match');
                 return;
             }
 
-            // Validate username format
-            if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-                showError('Username must be 3-20 characters (letters, numbers, underscore only)');
+            if (!Validator.isValidUsername(username)) {
+                UI.showError('Username must be 3-20 characters (letters, numbers, underscore only)');
                 return;
             }
 
-            showLoading();
+            UI.showLoading();
 
             try {
-                // Check if username already exists
-                const { data: existingUser } = await supabaseClient
+                // Check username availability
+                const { data: existing } = await supabaseClient
                     .from('user_profiles')
                     .select('username')
-                    .eq('username', username)
+                    .eq('username', username.toLowerCase())
                     .single();
 
-                if (existingUser) {
+                if (existing) {
                     throw new Error('Username already taken');
                 }
 
-                // Sign up with Supabase Auth
+                // Create account
                 const { data, error } = await supabaseClient.auth.signUp({
-                    email: email,
-                    password: password,
+                    email,
+                    password,
                     options: {
                         data: {
-                            username: username,
-                            display_name: username
+                            username: username.toLowerCase(),
+                            display_name: username,
+                            lesson_id: CONFIG.DEFAULTS.LESSON_ID
                         }
                     }
                 });
 
                 if (error) throw error;
 
-                // Check if email confirmation is required
+                // Handle email confirmation
                 if (data.user && !data.session) {
-                    showSuccess('Account created! Please check your email to verify your account.');
+                    UI.showSuccess('Account created! Check your email to verify.');
                 } else {
-                    showSuccess('Account created successfully! Redirecting...');
+                    UI.showSuccess('Account created! Redirecting...');
                     setTimeout(() => {
-                        window.location.href = 'greeting.html';
-                    }, 1500);
+                        window.location.href = CONFIG.ROUTES.GREETING;
+                    }, CONFIG.DEFAULTS.REDIRECT_DELAY);
                 }
 
             } catch (error) {
-                console.error('Signup error:', error);
-                showError(error.message || 'Failed to create account. Please try again.');
+                UI.showError(error.message || 'Failed to create account');
             } finally {
-                hideLoading();
+                UI.hideLoading();
             }
-        }
-
-        // ========================================
-        // UI HELPERS
-        // ========================================
-        function showError(message) {
-            const errorDiv = document.getElementById('error-message');
-            errorDiv.textContent = message;
-            errorDiv.classList.add('show');
-        }
-
-        function hideError() {
-            const errorDiv = document.getElementById('error-message');
-            errorDiv.classList.remove('show');
-        }
-
-        function showSuccess(message) {
-            const successDiv = document.getElementById('success-message');
-            successDiv.textContent = message;
-            successDiv.classList.add('show');
-        }
-
-        function hideSuccess() {
-            const successDiv = document.getElementById('success-message');
-            successDiv.classList.remove('show');
-        }
-
-        function showLoading() {
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('login-btn').disabled = true;
-            document.getElementById('signup-btn').disabled = true;
-        }
-
-        function hideLoading() {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('login-btn').disabled = false;
-            document.getElementById('signup-btn').disabled = false;
         }
     </script>
 </body>
