@@ -3,39 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JLPT N5 Flashcards - Welcome</title>
-    <meta http-equiv="refresh" content="0; url=login.html">
+    <title>JLPT N5 Flashcards - Select Lesson</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .message {
-            text-align: center;
-        }
-        h1 {
-            font-size: 3em;
-            margin-bottom: 20px;
-        }
-        p {
-            font-size: 1.2em;
-        }
-    </style>
-</head>
-<body>
-    <div class="message">
-        <h1>🎌 JLPT N5 Flashcards</h1>
-        <p>Redirecting to login...</p>
-        <p><a href="login.html" style="color: white;">Click here if not redirected automatically</a></p>
-    </div>
-</body>
-</html>
         * {
             margin: 0;
             padding: 0;
@@ -61,6 +31,56 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
 
+        .user-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+
         .logo {
             text-align: center;
             margin-bottom: 40px;
@@ -68,11 +88,13 @@
 
         .logo h1 {
             font-size: 2.5em;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
 
         .logo p {
@@ -214,9 +236,19 @@
 </head>
 <body>
     <div class="container">
+        <div class="user-header">
+            <div class="user-info">
+                <div class="user-avatar" id="user-avatar">?</div>
+                <div>
+                    <div class="user-name" id="user-name">Loading...</div>
+                </div>
+            </div>
+            <button class="logout-btn" onclick="handleLogout()">Logout</button>
+        </div>
+
         <div class="logo">
-            <h1>🎌 JLPT N5</h1>
-            <p>Flashcard Learning</p>
+            <h1 id="lesson-title">FlashCard Learning</h1>
+            <p id="lesson-description">Select a lesson to begin</p>
         </div>
 
         <form id="start-form">
@@ -261,6 +293,71 @@
         const SUPABASE_URL = 'https://xjsrxzxrbzogeidqcozp.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhqc3J4enhyYnpvZ2VpZHFjb3pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2ODk3MzIsImV4cCI6MjA4NTI2NTczMn0.fYf40PoX4y7UuC6kPBAvPdar99KfSXdKLKeflGSBXKA';
 
+        // Initialize Supabase client
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+
+        // ========================================
+        // CHECK AUTHENTICATION ON LOAD
+        // ========================================
+        window.addEventListener('DOMContentLoaded', async () => {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            
+            if (!session) {
+                // Not logged in, redirect to login page
+                window.location.href = 'login.html';
+                return;
+            }
+
+            currentUser = session.user;
+            await loadUserProfile();
+            loadLessons();
+        });
+
+        // ========================================
+        // LOAD USER PROFILE
+        // ========================================
+        async function loadUserProfile() {
+            try {
+                const { data: profile, error } = await supabaseClient
+                    .from('user_profiles')
+                    .select('username, display_name')
+                    .eq('id', currentUser.id)
+                    .single();
+
+                if (error) throw error;
+
+                const displayName = profile.display_name || profile.username || 'User';
+                document.getElementById('user-name').textContent = `Welcome, ${displayName}!`;
+                document.getElementById('user-avatar').textContent = displayName.charAt(0).toUpperCase();
+
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                document.getElementById('user-name').textContent = 'Welcome!';
+            }
+        }
+
+        // ========================================
+        // HANDLE LOGOUT
+        // ========================================
+        async function handleLogout() {
+            try {
+                const { error } = await supabaseClient.auth.signOut();
+                if (error) throw error;
+                
+                // Clear session storage
+                sessionStorage.clear();
+                
+                // Redirect to login
+                window.location.href = 'login.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                alert('Failed to logout. Please try again.');
+            }
+        }
+
         // ========================================
         // INITIALIZATION
         // ========================================
@@ -272,26 +369,17 @@
         const errorDiv = document.getElementById('error');
         const errorMessage = document.getElementById('error-message');
 
-        // Load lessons on page load
-        window.addEventListener('DOMContentLoaded', loadLessons);
-
         // ========================================
         // LOAD LESSONS FROM SUPABASE
         // ========================================
         async function loadLessons() {
             try {
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/lessons?order=lesson_number.asc`, {
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    }
-                });
+                const { data: lessons, error } = await supabaseClient
+                    .from('lessons')
+                    .select('*')
+                    .order('id', { ascending: true });
 
-                if (!response.ok) {
-                    throw new Error('Failed to load lessons. Please check your Supabase configuration.');
-                }
-
-                const lessons = await response.json();
+                if (error) throw error;
 
                 if (lessons.length === 0) {
                     lessonSelect.innerHTML = '<option value="">No lessons available</option>';
@@ -300,14 +388,30 @@
 
                 // Populate lesson dropdown
                 lessonSelect.innerHTML = lessons.map(lesson => 
-                    `<option value="${lesson.id}">${lesson.lesson_name}</option>`
+                    `<option value="${lesson.id}" data-description="${lesson.description || ''}">${lesson.lesson_name}</option>`
                 ).join('');
+
+                // Update description when lesson changes
+                lessonSelect.addEventListener('change', updateLessonDescription);
+                
+                // Set initial description
+                updateLessonDescription();
 
             } catch (error) {
                 console.error('Error loading lessons:', error);
                 lessonSelect.innerHTML = '<option value="">Error loading lessons</option>';
                 showError(error.message);
             }
+        }
+
+        // Update lesson description when selection changes
+        function updateLessonDescription() {
+            const selectedOption = lessonSelect.options[lessonSelect.selectedIndex];
+            const description = selectedOption.getAttribute('data-description');
+            const lessonName = selectedOption.text;
+            
+            document.getElementById('lesson-title').textContent = lessonName || 'FlashCard Learning';
+            document.getElementById('lesson-description').textContent = description || 'Select a lesson to begin';
         }
 
         // ========================================
@@ -335,28 +439,21 @@
 
             try {
                 // Fetch vocabulary for selected lesson
-                const response = await fetch(
-                    `${SUPABASE_URL}/rest/v1/vocabulary?lesson_id=eq.${lessonId}&order=id.asc`,
-                    {
-                        headers: {
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                        }
-                    }
-                );
+                const { data: vocabulary, error } = await supabaseClient
+                    .from('vocabulary')
+                    .select('*')
+                    .eq('lesson_id', lessonId)
+                    .order('id', { ascending: true });
 
-                if (!response.ok) {
-                    throw new Error('Failed to load vocabulary');
-                }
-
-                const vocabulary = await response.json();
+                if (error) throw error;
 
                 if (vocabulary.length === 0) {
                     throw new Error('No vocabulary found for this lesson');
                 }
 
-                // Store vocabulary in sessionStorage
+                // Store vocabulary and user info in sessionStorage
                 sessionStorage.setItem('vocabulary', JSON.stringify(vocabulary));
+                sessionStorage.setItem('userId', currentUser.id);
 
                 // Redirect to flashcard page
                 window.location.href = 'flashcards.html';

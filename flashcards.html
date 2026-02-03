@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JLPT N5 Flashcards</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -315,6 +316,16 @@
 
     <script>
         // ========================================
+        // SUPABASE CONFIGURATION
+        // ========================================
+        const SUPABASE_URL = 'https://xjsrxzxrbzogeidqcozp.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhqc3J4enhyYnpvZ2VpZHFjb3pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2ODk3MzIsImV4cCI6MjA4NTI2NTczMn0.fYf40PoX4y7UuC6kPBAvPdar99KfSXdKLKeflGSBXKA';
+
+        // Initialize Supabase client
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ========================================
         // LOAD DATA FROM SESSION STORAGE
         // ========================================
         let vocabulary = [];
@@ -323,11 +334,14 @@
         let learningCards = 0;
         let deck = [];
         let currentCategory = 'all';
+        let userId = null;
+        let sessionStartTime = Date.now();
 
         // Check if vocabulary data exists
         const vocabularyData = sessionStorage.getItem('vocabulary');
+        const userIdData = sessionStorage.getItem('userId');
         
-        if (!vocabularyData) {
+        if (!vocabularyData || !userIdData) {
             // Show error if no data
             document.getElementById('app').innerHTML = `
                 <div class="error-message">
@@ -339,6 +353,7 @@
         } else {
             // Load vocabulary and initialize app
             vocabulary = JSON.parse(vocabularyData);
+            userId = userIdData;
             initializeApp();
         }
 
@@ -459,16 +474,16 @@
             
             // Show hiragana reading only if it differs from the main text
             const hiraganaReading = document.getElementById('hiragana-reading');
-            if (card.jp !== card.hiragana) {
+            if (card.displayWord !== card.hiragana) {
                 hiraganaReading.textContent = card.hiragana;
                 hiraganaReading.style.display = 'block';
             } else {
                 hiraganaReading.style.display = 'none';
             }
             
-            document.getElementById('japanese').textContent = card.jp;
+            document.getElementById('japanese').textContent = card.displayWord;
             document.getElementById('romaji-reading').textContent = card.romaji;
-            document.getElementById('english').textContent = card.en;
+            document.getElementById('english').textContent = card.english;
             document.getElementById('category-front').textContent = card.category;
             document.getElementById('category-back').textContent = card.category;
 
@@ -486,6 +501,9 @@
                 learningCards++;
             }
 
+            // Save progress to database
+            saveProgress(status);
+
             currentIndex++;
             if (currentIndex >= deck.length) {
                 currentIndex = 0;
@@ -493,6 +511,34 @@
 
             updateStats();
             showCard();
+        }
+
+        // ========================================
+        // SAVE PROGRESS TO DATABASE
+        // ========================================
+        async function saveProgress(status) {
+            const card = deck[currentIndex];
+            
+            try {
+                // Upsert (insert or update) user progress
+                const { error } = await supabaseClient
+                    .from('user_progress')
+                    .upsert({
+                        user_id: userId,
+                        vocabulary_id: card.id,
+                        status: status,
+                        last_reviewed: new Date().toISOString(),
+                        review_count: 1 // This should be incremented, but we'll keep it simple for now
+                    }, {
+                        onConflict: 'user_id,vocabulary_id'
+                    });
+
+                if (error) {
+                    console.error('Error saving progress:', error);
+                }
+            } catch (error) {
+                console.error('Error saving progress:', error);
+            }
         }
 
         function updateStats() {
@@ -506,14 +552,50 @@
         }
 
         function goBack() {
+            // Save session before leaving
+            saveSession();
+            
             // Clear session storage
             sessionStorage.removeItem('vocabulary');
             sessionStorage.removeItem('selectedLesson');
             sessionStorage.removeItem('selectedType');
+            sessionStorage.removeItem('userId');
             
-            // Go back to start page
-            window.location.href = 'index.html';
+            // Go back to greeting page
+            window.location.href = 'greeting.html';
         }
+
+        // ========================================
+        // SAVE STUDY SESSION
+        // ========================================
+        async function saveSession() {
+            const lessonId = sessionStorage.getItem('selectedLesson');
+            const durationMinutes = Math.floor((Date.now() - sessionStartTime) / 60000);
+
+            try {
+                const { error } = await supabaseClient
+                    .from('user_sessions')
+                    .insert({
+                        user_id: userId,
+                        lesson_id: lessonId,
+                        cards_studied: knownCards + learningCards,
+                        cards_known: knownCards,
+                        cards_learning: learningCards,
+                        duration_minutes: durationMinutes
+                    });
+
+                if (error) {
+                    console.error('Error saving session:', error);
+                }
+            } catch (error) {
+                console.error('Error saving session:', error);
+            }
+        }
+
+        // Save session when page is closed/refreshed
+        window.addEventListener('beforeunload', () => {
+            saveSession();
+        });
     </script>
 </body>
 </html>

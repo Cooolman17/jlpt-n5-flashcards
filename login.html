@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - FlashCard Learning</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .auth-container {
+            max-width: 420px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .tab-container {
+            display: flex;
+            margin-bottom: 30px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 4px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: #666;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-container {
+            display: none;
+        }
+
+        .form-container.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 1em;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .password-toggle {
+            position: relative;
+        }
+
+        .password-toggle input {
+            padding-right: 45px;
+        }
+
+        .toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.1em;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .error-message {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+        }
+
+        .success-message {
+            background: #efe;
+            border: 1px solid #cfc;
+            color: #3c3;
+        }
+
+        .helper-text {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="logo">
+            <h1>FlashCard Learning</h1>
+            <p>Master Your Vocabulary</p>
+        </div>
+
+        <div class="tab-container">
+            <div class="tab active" onclick="switchTab('login')">Login</div>
+            <div class="tab" onclick="switchTab('signup')">Sign Up</div>
+        </div>
+
+        <div class="error-message message" id="error-message"></div>
+        <div class="success-message message" id="success-message"></div>
+
+        <!-- Login Form -->
+        <form class="form-container active" id="login-form" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="login-email">Email or Username</label>
+                <input type="text" id="login-email" placeholder="Enter your email or username" required>
+            </div>
+
+            <div class="form-group">
+                <label for="login-password">Password</label>
+                <div class="password-toggle">
+                    <input type="password" id="login-password" placeholder="Enter your password" required>
+                    <button type="button" class="toggle-btn" onclick="togglePassword('login-password')">👁️</button>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">Login</button>
+        </form>
+
+        <!-- Signup Form -->
+        <form class="form-container" id="signup-form" onsubmit="handleSignup(event)">
+            <div class="form-group">
+                <label for="signup-username">Username</label>
+                <input 
+                    type="text" 
+                    id="signup-username" 
+                    placeholder="Choose a username"
+                    pattern="[a-zA-Z0-9_]{3,20}"
+                    required
+                >
+                <div class="helper-text">3-20 characters, letters, numbers, and underscore only</div>
+            </div>
+
+            <div class="form-group">
+                <label for="signup-email">Email</label>
+                <input type="email" id="signup-email" placeholder="Enter your email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="signup-password">Password</label>
+                <div class="password-toggle">
+                    <input type="password" id="signup-password" placeholder="Create a password" minlength="6" required>
+                    <button type="button" class="toggle-btn" onclick="togglePassword('signup-password')">👁️</button>
+                </div>
+                <div class="helper-text">At least 6 characters</div>
+            </div>
+
+            <div class="form-group">
+                <label for="signup-confirm">Confirm Password</label>
+                <div class="password-toggle">
+                    <input type="password" id="signup-confirm" placeholder="Confirm your password" minlength="6" required>
+                    <button type="button" class="toggle-btn" onclick="togglePassword('signup-confirm')">👁️</button>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">Create Account</button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 15px; color: #666;">Processing...</p>
+        </div>
+    </div>
+
+    <script>
+        // Redirect if already logged in
+        (async () => {
+            const session = await Auth.getSession();
+            if (session) window.location.href = CONFIG.ROUTES.GREETING;
+        })();
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.querySelectorAll('.form-container').forEach(f => f.classList.remove('active'));
+            document.getElementById(`${tab}-form`).classList.add('active');
+            
+            UI.hideError();
+            UI.hideSuccess();
+        }
+
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const emailOrUsername = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            UI.hideError();
+            UI.hideSuccess();
+            UI.showLoading();
+
+            try {
+                let email = emailOrUsername;
+                
+                // Username lookup if not an email
+                if (!emailOrUsername.includes('@')) {
+                    const { data: profile, error } = await supabaseClient
+                        .from('user_profiles')
+                        .select('email')
+                        .eq('username', emailOrUsername.toLowerCase())
+                        .single();
+
+                    if (error || !profile) {
+                        throw new Error('Username not found');
+                    }
+                    email = profile.email;
+                }
+
+                // Authenticate
+                const { error } = await supabaseClient.auth.signInWithPassword({
+                    email,
+                    password
+                });
+
+                if (error) throw error;
+
+                UI.showSuccess('Login successful! Redirecting...');
+                setTimeout(() => {
+                    window.location.href = CONFIG.ROUTES.GREETING;
+                }, CONFIG.DEFAULTS.REDIRECT_DELAY);
+
+            } catch (error) {
+                UI.showError(error.message || 'Invalid email/username or password');
+            } finally {
+                UI.hideLoading();
+            }
+        }
+
+        async function handleSignup(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('signup-username').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value;
+            const confirm = document.getElementById('signup-confirm').value;
+
+            UI.hideError();
+            UI.hideSuccess();
+
+            // Validation
+            if (!Validator.passwordsMatch(password, confirm)) {
+                UI.showError('Passwords do not match');
+                return;
+            }
+
+            if (!Validator.isValidUsername(username)) {
+                UI.showError('Username must be 3-20 characters (letters, numbers, underscore only)');
+                return;
+            }
+
+            UI.showLoading();
+
+            try {
+                // Check username availability
+                const { data: existing } = await supabaseClient
+                    .from('user_profiles')
+                    .select('username')
+                    .eq('username', username.toLowerCase())
+                    .single();
+
+                if (existing) {
+                    throw new Error('Username already taken');
+                }
+
+                // Create account
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: {
+                            username: username.toLowerCase(),
+                            display_name: username,
+                            lesson_id: CONFIG.DEFAULTS.LESSON_ID
+                        }
+                    }
+                });
+
+                if (error) throw error;
+
+                // Handle email confirmation
+                if (data.user && !data.session) {
+                    UI.showSuccess('Account created! Check your email to verify.');
+                } else {
+                    UI.showSuccess('Account created! Redirecting...');
+                    setTimeout(() => {
+                        window.location.href = CONFIG.ROUTES.GREETING;
+                    }, CONFIG.DEFAULTS.REDIRECT_DELAY);
+                }
+
+            } catch (error) {
+                UI.showError(error.message || 'Failed to create account');
+            } finally {
+                UI.hideLoading();
+            }
+        }
+    </script>
+</body>
+</html>
